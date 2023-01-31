@@ -1,0 +1,10 @@
+[discord]
+token = ""
+msgChan = []
+bannedWords = []
+bannedUsers = []
+
+[api]
+url = ""
+username = ""
+password = ""
