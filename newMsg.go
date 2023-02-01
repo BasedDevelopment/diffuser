@@ -30,32 +30,35 @@ func newMsg(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
+	if m.Content == "lsckpt!" {
+		lsCkpt(s, m)
+	}
+
 	if len(m.Content) < 8 {
 		return
 	}
 
-	if m.Content[:8] != "diffuse!" {
-		return
-	}
+	if m.Content[:8] == "diffuse!" {
 
-	msg := m.Content[8:]
-	if msg[0] == ' ' {
-		msg = msg[1:]
-	}
-
-	user := m.Author.Username + "#" + m.Author.Discriminator
-	for _, word := range k.Strings("discord.bannedWords") {
-		if strings.Contains(msg, word) {
-			log.Warn().
-				Str("user", user).
-				Str("msg", msg).
-				Str("word", word).
-				Msg("Banned word detected")
-			if _, err := s.ChannelMessageSendReply(m.ChannelID, "Banned word detected, dropping request", m.Reference()); err != nil {
-				log.Error().Err(err).Msg("Failed to send message")
-			}
-			return
+		msg := m.Content[8:]
+		if msg[0] == ' ' {
+			msg = msg[1:]
 		}
+
+		user := m.Author.Username + "#" + m.Author.Discriminator
+		for _, word := range k.Strings("discord.bannedWords") {
+			if strings.Contains(msg, word) {
+				log.Warn().
+					Str("user", user).
+					Str("msg", msg).
+					Str("word", word).
+					Msg("Banned word detected")
+				if _, err := s.ChannelMessageSendReply(m.ChannelID, "Banned word detected, dropping request", m.Reference()); err != nil {
+					log.Error().Err(err).Msg("Failed to send message")
+				}
+				return
+			}
+		}
+		draw(s, m, msg)
 	}
-	draw(s, m, msg)
 }

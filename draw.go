@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/cookiejar"
 	"strings"
@@ -27,7 +28,7 @@ func draw(s *discordgo.Session, m *discordgo.MessageCreate, msg string) {
 
 	if len(msgParts) < 2 {
 		prompt = msgParts[0]
-		checkpoint = "wd-v1-3-full-opt.ckpt [3e1a125f]"
+		checkpoint = "wd-1-4-RealOrFake-PossiblyReal-HowIsThisAnime-TestFilename-RafaelWasHere.ckpt [c76e0962bc]"
 	} else {
 		prompt = msgParts[0]
 		checkpoint = msgParts[1]
@@ -36,9 +37,10 @@ func draw(s *discordgo.Session, m *discordgo.MessageCreate, msg string) {
 	reqBody := map[string]interface{}{
 		"prompt": prompt,
 		"override_settings": map[string]string{
-			"sd_model_checkpoint": "\"" + checkpoint + "\"",
+			"sd_model_checkpoint": checkpoint,
 		},
 	}
+	fmt.Println(checkpoint)
 
 	reqJson, err := json.Marshal(reqBody)
 	if err != nil {
@@ -104,12 +106,28 @@ func draw(s *discordgo.Session, m *discordgo.MessageCreate, msg string) {
 
 	// print index 0 of images
 	img := (respBodyParsed["images"].([]interface{})[0])
+	if img == nil {
+		log.Error().
+			Str("resp", respBody).
+			Str("req", string(reqJson)).
+			Msg("img is nil")
+		return
+	}
 
 	// Convirt image from bae64 to bytes data:image/png;base64
-	imgData := strings.Split(img.(string), ",")[1]
-	unbased, _ := base64.StdEncoding.DecodeString(imgData)
 
-	outMsg := "Prompt: " + prompt + ", Checkpoint: " + checkpoint + respBodyParsed["info"].(string)
+	//imgData := strings.Split(img.(string), ",")[1]
+	//unbased, _ := base64.StdEncoding.DecodeString(imgData)
+	unbased, _ := base64.StdEncoding.DecodeString(img.(string))
+
+	outInfoJson := map[string]interface{}{}
+	_ = json.Unmarshal([]byte(respBodyParsed["info"].(string)), &outInfoJson)
+	outInfo := outInfoJson["infotexts"].([]interface{})[0].(string)
+
+	embed := &discordgo.MessageEmbed{
+		Description: outInfo,
+	}
+
 	s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
 		Files: []*discordgo.File{
 			{
@@ -117,7 +135,7 @@ func draw(s *discordgo.Session, m *discordgo.MessageCreate, msg string) {
 				Reader: strings.NewReader(string(unbased)),
 			},
 		},
-		Content: outMsg,
+		Embed: embed,
 		Reference: &discordgo.MessageReference{
 			MessageID: m.ID,
 		},
