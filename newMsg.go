@@ -10,8 +10,20 @@ import (
 func newMsg(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	proceed := false
+
+	channelID := m.ChannelID
+
+	channel, err := s.State.Channel(m.ChannelID)
+	if err != nil {
+		s.ChannelMessageSendReply(m.ChannelID, "Error getting channel: "+err.Error(), m.Reference())
+		return
+	}
+	if channel.IsThread() {
+		channelID = channel.ParentID
+	}
+
 	for _, channel := range k.Strings("discord.msgChan") {
-		if m.ChannelID == channel {
+		if channelID == channel {
 			proceed = true
 		}
 	}
