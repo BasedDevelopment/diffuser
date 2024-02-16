@@ -18,6 +18,7 @@ func newMsg(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSendReply(m.ChannelID, "Error getting channel: "+err.Error(), m.Reference())
 		return
 	}
+
 	if channel.IsThread() {
 		channelID = channel.ParentID
 	}
@@ -36,12 +37,6 @@ func newMsg(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	for _, user := range k.Strings("discord.bannedUsers") {
-		if m.Author.ID == user {
-			return
-		}
-	}
-
 	if m.Content == "lsckpt!" {
 		lsCkpt(s, m)
 	}
@@ -51,6 +46,13 @@ func newMsg(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if m.Content[:8] == "diffuse!" {
+		for _, user := range k.Strings("discord.bannedUsers") {
+			if m.Author.ID == user {
+				s.ChannelMessageSendReply(m.ChannelID, "Banned user detected, dropping request", m.Reference())
+				log.Info().Str("user", m.Author.Username).Msg("Banned user detected, dropping request")
+				return
+			}
+		}
 
 		msg := m.Content[8:]
 		if msg[0] == ' ' {

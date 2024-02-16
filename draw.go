@@ -130,7 +130,7 @@ func draw(s *discordgo.Session, m *discordgo.MessageCreate, msg string) {
 		Description: outInfo,
 	}
 
-	s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+	embedMsg, err := s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
 		Files: []*discordgo.File{
 			{
 				Name:   "image.png",
@@ -142,4 +142,20 @@ func draw(s *discordgo.Session, m *discordgo.MessageCreate, msg string) {
 			MessageID: m.ID,
 		},
 	})
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("user", m.Author.Username).
+			Str("prompt", msg).
+			Str("Model", checkpoint).
+			Msg("error sending embed")
+		return
+	}
+	s.MessageReactionAdd(m.ChannelID, embedMsg.Reference().MessageID, "🗑️")
+
+	log.Info().
+		Str("user", m.Author.Username).
+		Str("prompt", msg).
+		Str("Model", checkpoint).
+		Msg("draw done")
 }
