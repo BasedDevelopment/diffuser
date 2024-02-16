@@ -6,5 +6,6 @@ bannedUsers = []
 
 [api]
 url = ""
+default_ckpt = ""
 username = ""
 password = ""

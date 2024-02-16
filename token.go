@@ -13,8 +13,8 @@ func getToken() {
 	reqUrl := k.String("api.url") + "/login"
 
 	v := url.Values{}
-	v.Set("username", k.String("api.username"))
-	v.Set("password", k.String("api.password"))
+	//v.Set("username", k.String("api.username"))
+	//v.Set("password", k.String("api.password"))
 
 	r, _ := http.NewRequest(http.MethodPost, reqUrl, bytes.NewBufferString(v.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")

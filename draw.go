@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/cookiejar"
 	"strings"
@@ -16,19 +15,15 @@ import (
 func draw(s *discordgo.Session, m *discordgo.MessageCreate, msg string) {
 	s.MessageReactionAdd(m.ChannelID, m.Reference().MessageID, "⌛")
 
-	log.Info().
-		Str("user", m.Author.Username).
-		Str("prompt", msg).
-		Msg("draw")
-
 	reqUrl := k.String("api.url") + "/sdapi/v1/txt2img"
+	defaultCkpt := k.String("api.default_ckpt")
 
 	var prompt, checkpoint string
 	msgParts := strings.Split(msg, "?")
 
 	if len(msgParts) < 2 {
 		prompt = msgParts[0]
-		checkpoint = "wd-1-4-RealOrFake-PossiblyReal-HowIsThisAnime-TestFilename-RafaelWasHere.ckpt [c76e0962bc]"
+		checkpoint = defaultCkpt
 	} else {
 		prompt = msgParts[0]
 		checkpoint = msgParts[1]
@@ -40,7 +35,12 @@ func draw(s *discordgo.Session, m *discordgo.MessageCreate, msg string) {
 			"sd_model_checkpoint": checkpoint,
 		},
 	}
-	fmt.Println(checkpoint)
+
+	log.Info().
+		Str("user", m.Author.Username).
+		Str("prompt", msg).
+		Str("Model", checkpoint).
+		Msg("draw")
 
 	reqJson, err := json.Marshal(reqBody)
 	if err != nil {
@@ -123,6 +123,8 @@ func draw(s *discordgo.Session, m *discordgo.MessageCreate, msg string) {
 	outInfoJson := map[string]interface{}{}
 	_ = json.Unmarshal([]byte(respBodyParsed["info"].(string)), &outInfoJson)
 	outInfo := outInfoJson["infotexts"].([]interface{})[0].(string)
+	outInfo += "\n" + "This is an ai generated art, **distribution and use is strictly prohibited**."
+	outInfo += "\n" + "We do not wish to starve any artists, please support them."
 
 	embed := &discordgo.MessageEmbed{
 		Description: outInfo,

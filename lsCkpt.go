@@ -32,7 +32,6 @@ func lsCkpt(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	type respJsonStr struct {
 		Title string `json:"title"`
-		Hash  string `json:"hash"`
 	}
 	var respJson []respJsonStr
 	err = json.Unmarshal(body, &respJson)
@@ -42,9 +41,6 @@ func lsCkpt(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	outMsg := "```"
 	for _, model := range respJson {
-		if model.Hash == "" {
-			continue
-		}
 		outMsg += model.Title + "\n"
 	}
 	outMsg += "```"
